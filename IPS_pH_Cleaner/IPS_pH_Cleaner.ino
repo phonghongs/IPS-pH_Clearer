@@ -27,12 +27,13 @@
 #define stepPin_2 A5
 #define dirPin_2 A4
 // Define Relay 
-#define Xa 10
-#define Bom 11
+#define Xa 11
+#define Bom 10
 #define Thoi 12
 
 #define steps 800
-#define Delay_xa 3000 // thoi gian xa nuoc den khi can
+//#define Delay_xa 120000 // thoi gian xa nuoc den khi can
+#define Delay_xa 120000
 //define function
 void Mode1();
 void Mode2();
@@ -65,8 +66,8 @@ void setup() {
   pinMode(led_1_2, OUTPUT);
   pinMode(led_2  , OUTPUT);
 
-  pinMode(Bom_2, OUTPUT);
-  pinMode(Bom_1, OUTPUT);
+  pinMode(Bom, OUTPUT);
+  pinMode(Xa, OUTPUT);
   pinMode(Thoi, OUTPUT);
 }
 
@@ -90,12 +91,12 @@ void loop() {
   }
   else
     if(digitalRead(mode_1_2)==LOW) { // check button 1_2
-      if (SwitchX2 == 0)
+      if (digitalRead(SwitchX2) == 0)
         Mode2();  // run mode 2
     }
      else
       if (digitalRead(mode_2) == LOW) { // check button 2
-        if (SwitchX2 == 0)
+        if (digitalRead(SwitchX2) == 0)
           Mode3(); // run mode 3
       }
 }
@@ -120,11 +121,11 @@ void Mode1(){
   digitalWrite(led_2, LOW);
 
   while(digitalRead(SwitchY1)!=LOW) OpenStepMotor(dirPin_1,0,stepPin_1,steps);
-  delay(1000);
+  delay(100);
   while(digitalRead(SwitchX2)!=LOW) OpenStepMotor(dirPin_2,1,stepPin_2,steps);
-  delay(1000);
+  delay(100);
   while(digitalRead(SwitchY2)!=LOW) OpenStepMotor(dirPin_1,1,stepPin_1,steps);
-  delay(1000); 
+  delay(100); 
   
   digitalWrite(led_1_1, LOW); 
 }
@@ -151,28 +152,43 @@ void Mode2(){
   digitalWrite(led_1_1, LOW);
   digitalWrite(led_1_2, HIGH);
   digitalWrite(led_2, LOW);
+  
   digitalWrite(Xa, HIGH);
   
   delay(Delay_xa);
-  for (int i=0; i< 5; i++){
-    if (i < 2) 
+  
+  for (int i=0; i< 4; i++){
+    if (i < 3) 
       digitalWrite(Bom, HIGH);
     else {
       digitalWrite(Bom, LOW);
       digitalWrite(Thoi, HIGH);
     }
-    unsigned long checkTime=millis();
-    while(millis()-checkTime<=3000) OpenStepMotor(dirPin_1,0,stepPin_1,steps);
+    
+    for (int j=0; j< 2000; j++)
+      OpenStepMotor(dirPin_1,0,stepPin_1,steps);
     delay(100);
-    while(digitalRead(SwitchY2) != LOW) OpenStepMotor(dirPin_1, 1, stepPin_1, steps);
+    for (int j=0; j< 2000; j++)
+      OpenStepMotor(dirPin_1, 1, stepPin_1, steps);
     delay(100);
   }
   
   delay(500);
+  digitalWrite(Xa, LOW);
   digitalWrite(Thoi, LOW);
-  while (digitalRead(Water_Sensor);
   digitalWrite(Bom, LOW);
-  digitalWrite(led_1_2, LOW);
+  
+  delay(1000);
+  digitalWrite(Bom, HIGH);
+  int check = 0;
+  while (check < 10){
+    int t = digitalRead(Water_Sensor);
+    if (t == LOW) check++;  
+    Serial.println(t);
+    delay(20);
+  }
+  digitalWrite(Bom, LOW);
+  digitalWrite(led_1_2, LOW); 
 }
 
 void Mode3(){  
@@ -201,47 +217,52 @@ void Mode3(){
   digitalWrite(Xa, HIGH);
   
   delay(Delay_xa);
-  for (int i=0; i< 5; i++){
-    if (i < 2) 
+  
+  for (int i=0; i< 4; i++){
+    if (i < 3) 
       digitalWrite(Bom, HIGH);
     else {
       digitalWrite(Bom, LOW);
       digitalWrite(Thoi, HIGH);
     }
     unsigned long checkTime=millis();
-    while(millis()-checkTime<=3000) OpenStepMotor(dirPin_1,0,stepPin_1,steps);
+    for (int j=0; j< 2000; j++)
+      OpenStepMotor(dirPin_1,0,stepPin_1,steps);
     delay(100);
-    while(digitalRead(SwitchY2) != LOW) OpenStepMotor(dirPin_1, 1, stepPin_1, steps);
+    for (int j=0; j< 2000; j++)
+      OpenStepMotor(dirPin_1, 1, stepPin_1, steps);
     delay(100);
   }
-  delay(200);
+  delay(500);
   digitalWrite(Xa, LOW);
   digitalWrite(Thoi, LOW);
-  digitalWrite(Bom, HIGH);
+  digitalWrite(Bom, LOW);
   
   while(digitalRead(SwitchY1)!=LOW){
     OpenStepMotor(dirPin_1,0,stepPin_1,steps);
-    if (digitalRead(Water_Sensor) == 0)
-      digitalWrite(Bom, LOW);
   }
   delay(100);
   while(digitalRead(SwitchX1)!=LOW){
     OpenStepMotor(dirPin_2,0,stepPin_2,steps);
-    if (digitalRead(Water_Sensor) == 0)
-      digitalWrite(Bom, LOW);
   }
   delay(100);
   while(digitalRead(SwitchY2)!=LOW){
     OpenStepMotor(dirPin_1,1,stepPin_1,steps);
-    if (digitalRead(Water_Sensor) == 0)
-      digitalWrite(Bom, LOW);
   }
   delay(100);
+
+  digitalWrite(Bom, HIGH);
   
-  while (digitalRead(Water_Sensor) != LOW);
+  int check = 0;
+  while (check < 10){
+    int t = digitalRead(Water_Sensor);
+    if (t == LOW) check++;  
+    Serial.println(t);
+    delay(20);
+  }
+    
   digitalWrite(Bom, LOW);
   digitalWrite(led_2, LOW);
-  
 }
 // control StepMotor
 void OpenStepMotor(uint8_t Dir,int Dir_Status,uint8_t MotorPin,uint16_t stepss){
